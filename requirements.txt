@@ -4,3 +4,4 @@ sqlalchemy
 uuid
 python-dotenv
 psycopg2
+googlemaps
