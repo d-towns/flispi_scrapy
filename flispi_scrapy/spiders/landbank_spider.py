@@ -223,8 +223,9 @@ class PriceSpider(scrapy.Spider):
                 property_features[text] = True
         
         yield property_details
-
-runner = CrawlerRunner()
+settings = get_project_settings()
+runner = CrawlerRunner(settings)
+configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
     yield runner.crawl(LandBankSpider)
