@@ -4,4 +4,3 @@ sqlalchemy
 uuid
 python-dotenv
 psycopg2
-```
