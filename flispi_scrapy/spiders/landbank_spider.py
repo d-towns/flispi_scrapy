@@ -44,19 +44,19 @@ class LandBankSpider(scrapy.Spider):
         # Handle pagination
         next_link_exists = response.xpath('//a[contains(@href, "javascript:document.LRCquery.LRCpage.value=\'next\';document.LRCquery.submit();")]').get()
         print('does find js <a> tag', next_link_exists)
-        # if next_link_exists:
-        #     formdata = {
-        #         'LRCpage': 'next',
-        #         'LRCsearch': 'redo',
-        #         # you may need to include other form fields here
-        #     }
+        if next_link_exists:
+            formdata = {
+                'LRCpage': 'next',
+                'LRCsearch': 'redo',
+                # you may need to include other form fields here
+            }
 
-        #     yield scrapy.FormRequest.from_response(
-        #         response,
-        #         formname='LRCquery',  # replace with actual form name
-        #         formdata=formdata,
-        #         callback=self.parse
-        #     )
+            yield scrapy.FormRequest.from_response(
+                response,
+                formname='LRCquery',  # replace with actual form name
+                formdata=formdata,
+                callback=self.parse
+            )
 
 class PriceSpider(scrapy.Spider):
     name = 'price_spider'
@@ -79,15 +79,15 @@ class PriceSpider(scrapy.Spider):
         parcel_ids = [row.parcel_id for row in session.query(PropertyEntity.parcel_id).all() if row.parcel_id != '0' and row.parcel_id != 'None']
         session.close()
         # Test Url
-        yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119176011&loc=2&from=main', 
-            callback=self.parse,
-            meta={'parcel_id': '4119176011'})
-        # for pid in parcel_ids:
-        # #     # Assuming parcelId is a unique identifier, construct the URL
-        # #     # https://www.thelandbank.org/property_sheet.asp?pid=0404300022&loc=2&from=main
-        #     yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=' + str(pid) + '&loc=2&from=main', 
-        #                 callback=self.parse, 
-        #                 meta={'parcel_id': pid})
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119176011&loc=2&from=main', 
+        #     callback=self.parse,
+        #     meta={'parcel_id': '4119176011'})
+        for pid in parcel_ids:
+        #     # Assuming parcelId is a unique identifier, construct the URL
+        #     # https://www.thelandbank.org/property_sheet.asp?pid=0404300022&loc=2&from=main
+            yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=' + str(pid) + '&loc=2&from=main', 
+                        callback=self.parse, 
+                        meta={'parcel_id': pid})
 
     # Grab the data on the search details page (property_sheet.asp)
     def parse(self, response):
