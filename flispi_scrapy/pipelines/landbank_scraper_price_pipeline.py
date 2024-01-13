@@ -13,7 +13,7 @@ gmaps = googlemaps.Client(key=os.environ['GOOGLE_API_KEY'])
 class LandbankPriceScraperPipeline(object):
     def open_spider(self, spider):
         #Get specific environment variables
-        db_url = os.environ['PROD_POSTGRESS_URL'] if os.environ['NODE_ENV'] != 'development' else os.environ['DEV_POSTGRESS_URL']
+        db_url = os.environ['PROD_POSTGRESS_URL'] if os.environ['ENV'] != 'development' else os.environ['DEV_POSTGRESS_URL']
 
         self.connection_string = db_url
         self.engine = create_engine(self.connection_string)
@@ -29,7 +29,6 @@ class LandbankPriceScraperPipeline(object):
         property_ = self.session.query(PropertyEntity).filter_by(parcel_id=item['parcel_id']).first()
 
         if property_.coords == None:
-            print("coords", property_.coords)
             address = property_.address + ', ' + property_.city + ', ' + property_.zip
             print(address)
             geocode_result = gmaps.geocode(address)

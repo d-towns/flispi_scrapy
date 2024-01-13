@@ -10,11 +10,7 @@ load_dotenv()
 
 class LandbankScraperPipeline(object):
     def __init__(self):
-        # db_url = os.environ['PROD_POSTGRESS_URL'] if os.environ['NODE_ENV'] != 'development' else os.environ['DEV_POSTGRESS_URL']
         db_url = os.environ['PROD_POSTGRESS_URL']
-        print('db_url', db_url)
-
-
         self.connection_string = db_url
         self.engine = create_engine(self.connection_string)
         # get all of the parcel IDs from the database and store them in a list in self.parcel_ids

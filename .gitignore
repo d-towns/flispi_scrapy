@@ -1,6 +1,4 @@
+/.env
 /env
 /venv
 /flispi_scrapy/__pycache__
-.env
-```
-.env

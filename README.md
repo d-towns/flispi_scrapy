@@ -12,8 +12,8 @@ Due to the nature of the website, the scraper had to be written using two differ
 4. Create a .env file in the root directory of the project and add the following variables:
     - PROD_POSTGRESS_URL
     - DEV_POSTGRESS_URL
-    - GOOGLE_API_KEY=
-    - ENV=
+    - GOOGLE_API_KEY
+    - ENV
 5. Start your virtual environment
 6. Run the following command to start the scraper:
     - `scrapy crawl landbank_spider`
