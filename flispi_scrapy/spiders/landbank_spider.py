@@ -43,12 +43,11 @@ class LandBankSpider(scrapy.Spider):
 
         # Handle pagination
         next_link_exists = response.xpath('//a[contains(@href, "javascript:document.LRCquery.LRCpage.value=\'next\';document.LRCquery.submit();")]').get()
-        print('does find js <a> tag', next_link_exists)
+        print('Pagination Found, executing...', next_link_exists)
         if next_link_exists:
             formdata = {
                 'LRCpage': 'next',
                 'LRCsearch': 'redo',
-                # you may need to include other form fields here
             }
 
             yield scrapy.FormRequest.from_response(
@@ -71,7 +70,6 @@ class PriceSpider(scrapy.Spider):
 
         # #Get specific environment variables
         prod_db_url = os.environ['PROD_POSTGRESS_URL']
-        # print(prod_db_url)
         self.connection_string = prod_db_url
         self.engine = create_engine(self.connection_string)
         Session = sessionmaker(bind=self.engine)
@@ -97,11 +95,9 @@ class PriceSpider(scrapy.Spider):
         property_item = Property()
         property_item['parcel_id'] = response.meta['parcel_id']
 
-        print(property_item)
         if starting_price:
             if '$' in starting_price:
                 starting_price = int(starting_price.replace('$', '').replace(',', '').strip())
-                print('price_row', starting_price)
                 property_item['price'] = starting_price
             else:
                 property_item['price'] = 0
@@ -110,7 +106,6 @@ class PriceSpider(scrapy.Spider):
         # Extract the href attribute from the selected <a> tag
         link = link_selector.get()
         if(link):
-            print('link', link)
             # Follow the link to the featured property page and grab more info
             yield scrapy.Request(url='https://www.thelandbank.org/' + link, callback=self.extract_featured_data, meta={'property_item': property_item})
         else:
@@ -129,52 +124,41 @@ class PriceSpider(scrapy.Spider):
         exterior_repairs_text = response.xpath("//article[@id='content']/ul[position()=1]")
         interior_repairs_text = response.xpath("//article[@id='content']/ul[position()=2]")
 
-        # print('EXTERIOR', exterior_repairs_text)
-        print('NEXT SHOWTIME', next_showtime)
-
         exterior_repairs = []
         interior_repairs = []
         
         if exterior_repairs_text.xpath('./li'):
-            print('here')
             for li in exterior_repairs_text.xpath('./li'):
                 text = li.xpath('normalize-space(.)').get()
                 exterior_repairs.append(text)
-                print(exterior_repairs)
             property_details['exterior_repairs'] = interior_repairs
 
         if interior_repairs_text.xpath('./li'):
             for li in interior_repairs_text.xpath('./li'):
                 text = li.xpath('normalize-space(.)').get()
                 interior_repairs.append(text)
-                print(interior_repairs)
             property_details['interior_repairs'] = exterior_repairs
 
         if next_showtime:
             match = re.search(r'(\w+,\s+\w+\s+\d{1,2},\s+\d{4});\s+(\d{1,2}:\d{2}\s+[ap]\.m\.)', next_showtime)
             if match:
                 date_to_parse = match.group(1) + ' ' + match.group(2)
-                print('DATE TO PARSE', date_to_parse)
                 date_string = date_to_parse.replace('p.m.', 'PM').replace('a.m.', 'AM')
-                print(date_string)
                 date_object = datetime.strptime(date_string, '%A, %B %d, %Y %I:%M %p')
                 property_details['next_showtime'] = date_object
             else:
                 print("SHOWTIME: Date and time format not recognized")
 
-        print('property_info_list', property_info_list)
 
         # Initialize a dictionary to hold the extracted property details
 
         if suggested_offer_price and 'negotiable' not in str(suggested_offer_price).lower():
             suggested_offer_price = int(suggested_offer_price.split(':')[1].replace(',', '').replace("$", "").strip())
-            print('suggested_offer_price', suggested_offer_price)
             property_details['price'] = int(suggested_offer_price)
 
         carousel_div = response.xpath("//div[@class='bss-slides ccss1']/div")
         lightbox_a_tag = response.xpath("//a[@class='sslightbox']/@href")
 
-        print('lightbox_a_tag', lightbox_a_tag) 
 
         for tag in lightbox_a_tag:
             image = tag.get()
@@ -184,7 +168,6 @@ class PriceSpider(scrapy.Spider):
                 if 'images' not in property_details:
                     property_details['images'] = []
                 property_details['images'].append(image)
-                print ('IMAGE URLS', property_details['images'])
 
         for figure in carousel_div.xpath('./figure'):
             image = figure.xpath('./img/@src').get()
@@ -194,7 +177,6 @@ class PriceSpider(scrapy.Spider):
                 if 'images' not in property_details:
                     property_details['images'] = []
                 property_details['images'].append(image)
-                print ('IMAGE URLS', property_details['images'])
 
 
         property_features = {}
