@@ -77,9 +77,9 @@ class PriceSpider(scrapy.Spider):
         parcel_ids = [row.parcel_id for row in session.query(PropertyEntity.parcel_id).all() if row.parcel_id != '0' and row.parcel_id != 'None']
         session.close()
         # Test Url
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119176011&loc=2&from=main', 
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4728355061&loc=1&from=main', 
         #     callback=self.parse,
-        #     meta={'parcel_id': '4119176011'})
+        #     meta={'parcel_id': '4728355061'})
         for pid in parcel_ids:
         #     # Assuming parcelId is a unique identifier, construct the URL
         #     # https://www.thelandbank.org/property_sheet.asp?pid=0404300022&loc=2&from=main
@@ -156,7 +156,7 @@ class PriceSpider(scrapy.Spider):
             suggested_offer_price = int(suggested_offer_price.split(':')[1].replace(',', '').replace("$", "").strip())
             property_details['price'] = int(suggested_offer_price)
 
-        carousel_div = response.xpath("//div[@class='bss-slides ccss1']/div")
+        carousel_div = response.xpath("//div[@class='bss-slides ccss1']")
         lightbox_a_tag = response.xpath("//a[@class='sslightbox']/@href")
 
 
