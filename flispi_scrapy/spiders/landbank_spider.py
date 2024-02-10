@@ -89,6 +89,8 @@ class PriceSpider(scrapy.Spider):
         if property_not_available:
             property_item.update({'not_available': True})
             yield property_item
+        else:
+            property_item.update({'not_available': False})
 
         featured_link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
 
