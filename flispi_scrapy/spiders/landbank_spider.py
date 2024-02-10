@@ -177,7 +177,7 @@ runner = CrawlerRunner(settings)
 configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
-    # yield runner.crawl(LandBankSpider)
+    yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
     reactor.stop()
 
