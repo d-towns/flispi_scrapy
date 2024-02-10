@@ -25,8 +25,16 @@ class LandbankPriceScraperPipeline(object):
 
     def process_item(self, item, spider):
         # Find the property based on parcelId and update its price
-        print('item in pipline', item)
+        print('item in price pipline', item)
         property_ = self.session.query(PropertyEntity).filter_by(parcel_id=item['parcel_id']).first()
+
+        if property_ is None:
+            print('Property not found')
+            return item
+        elif item['not_available']: # we have the item but land bank says it's not available
+            self.session.delete(property_)
+            print(item['parcel_id'], 'no longer available, deleted from database')
+            return item
 
         if property_.coords == None:
             address = property_.address + ', ' + property_.city + ', ' + property_.zip

@@ -71,26 +71,31 @@ class PriceSpider(scrapy.Spider):
         with Session() as session:
             parcel_ids = [row.parcel_id for row in session.query(PropertyEntity.parcel_id).all() if row.parcel_id not in ('0', 'None')]
         for pid in parcel_ids:
-            url = 'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
+            url = 'https://www.thelandbank.org/property_sheet.asp?pid=' + pid + '&loc=2&from=main'
             yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
         
         # Test Url
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4626153017&loc=2&from=main', 
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=425651168&loc=2&from=main', 
         #     callback=self.parse,
-        #     meta={'parcel_id': '4626153017'})
+        #     meta={'parcel_id': '425651168'})
 
     # Grab the data on the search details page (property_sheet.asp)
     def parse(self, response):
         starting_price = response.xpath('//table[@class="infotab"]/tr[1]/td[2]/text()').get()
         price = self.extract_price(starting_price)
-
-        link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
         property_item = Property(parcel_id=response.meta['parcel_id'], price=price)
 
+        property_not_available = response.xpath("//h2[contains(text(), 'Property Not Availiable')]/text()").get()
+        if property_not_available:
+            property_item.update({'not_available': True})
+            yield property_item
+
+        featured_link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
+
         # Extract the href attribute from the selected <a> tag
-        if link:
+        if featured_link:
             # Follow the link to the featured property page and grab more info
-            yield scrapy.Request(url='https://www.thelandbank.org/' + link, callback=self.extract_featured_data, meta={'property_item': property_item})
+            yield scrapy.Request(url='https://www.thelandbank.org/' + featured_link, callback=self.extract_featured_data, meta={'property_item': property_item})
         else:
             yield property_item
 
@@ -177,7 +182,7 @@ runner = CrawlerRunner(settings)
 configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
-    yield runner.crawl(LandBankSpider)
+    # yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
     reactor.stop()
 

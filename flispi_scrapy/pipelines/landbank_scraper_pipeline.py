@@ -17,7 +17,7 @@ class LandbankScraperPipeline(object):
         self.parcel_ids = pd.read_sql_query("SELECT parcel_id FROM properties", self.engine)['parcel_id'].tolist()
 
     def process_item(self, item, spider):
-        print('item in pipline', item)
+        print('item in initial pipline', item)
         if isinstance(item, Property):
             df = pd.DataFrame({
                 'id': [str(uuid.uuid4())], # new UUID field
