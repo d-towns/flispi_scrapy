@@ -18,6 +18,7 @@ from scrapy.utils.log import configure_logging
 from scrapy.utils.project import get_project_settings
 
 
+
 class LandBankSpider(scrapy.Spider):
     name = 'landbank_spider'
     start_urls = ['https://www.thelandbank.org/find_properties.asp?LRCsearch=setdo']
@@ -71,7 +72,7 @@ class PriceSpider(scrapy.Spider):
         with Session() as session:
             parcel_ids = [row.parcel_id for row in session.query(PropertyEntity.parcel_id).all() if row.parcel_id not in ('0', 'None')]
         for pid in parcel_ids:
-            url = 'https://www.thelandbank.org/property_sheet.asp?pid=' + pid + '&loc=2&from=main'
+            url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
             yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
         
         # Test Url
@@ -86,15 +87,14 @@ class PriceSpider(scrapy.Spider):
         property_item = Property(parcel_id=response.meta['parcel_id'], price=price)
 
         property_not_available = response.xpath("//h2[contains(text(), 'Property Not Availiable')]/text()").get()
-        if property_not_available:
-            property_item.update({'not_available': True})
+
+        property_item.update({'not_available': True if property_not_available else False})
+        if property_not_available: 
             yield property_item
-        else:
-            property_item.update({'not_available': False})
+            return
 
         featured_link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
 
-        # Extract the href attribute from the selected <a> tag
         if featured_link:
             # Follow the link to the featured property page and grab more info
             yield scrapy.Request(url='https://www.thelandbank.org/' + featured_link, callback=self.extract_featured_data, meta={'property_item': property_item})
@@ -104,7 +104,6 @@ class PriceSpider(scrapy.Spider):
     # Grab the data on the featured details page (featuredproperty.asp)
     def extract_featured_data(self, response):
         # Follow the link to the featured property page and grab more info
-        # Select the div by class name, then the ul within it
         
         # yield property_details
         property_details = response.meta['property_item']
@@ -184,7 +183,7 @@ runner = CrawlerRunner(settings)
 configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
-    # yield runner.crawl(LandBankSpider)
+    yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
     reactor.stop()
 
