@@ -1,6 +1,5 @@
 import pandas as pd
 from sqlalchemy import create_engine
-import sqlite3
 import uuid
 import os
 from dotenv import load_dotenv
@@ -11,38 +10,40 @@ load_dotenv()
 class LandbankScraperPipeline(object):
     def __init__(self):
         db_url = os.environ['PROD_POSTGRESS_URL']
-        self.connection_string = db_url
-        self.engine = create_engine(self.connection_string)
-        # get all of the parcel IDs from the database and store them in a list in self.parcel_ids
-        self.parcel_ids = pd.read_sql_query("SELECT parcel_id FROM properties", self.engine)['parcel_id'].tolist()
+        self.engine = create_engine(db_url)
+        self.parcel_ids = self._load_parcel_ids()
+
+    def _load_parcel_ids(self):
+        """Load parcel IDs from the database into a set for faster lookup."""
+        result = pd.read_sql_query("SELECT parcel_id FROM properties", self.engine)
+        return set(result['parcel_id'].tolist())
 
     def process_item(self, item, spider):
-        print('item in initial pipline', item)
         if isinstance(item, Property):
-            df = pd.DataFrame({
-                'id': [str(uuid.uuid4())], # new UUID field
-                'parcel_id': [item['parcel_id']], # remove spaces from parcelId
-                'address': [item['address']],
-                'city': [item['city']],
-                'zip': [item['zip']],
-                'property_class': [item['property_class']],
-                'featured' : False,
-                'price': None,
-                'square_feet': None,
-                'bedrooms': None,
-                'bathrooms': None,
-                'year_built': None,
-                'lot_size': None,
-                'stories': None,
-                'garage': None,
-                'features': None,
-                'coords': None
-            })
-            # if the parcel ID already exists in the db, do not save
-            # if the parcel ID does not exist in the db, save
-            if item['parcel_id'] in self.parcel_ids:
-                print('Parcel ID already exists in the database')
+            if item['parcel_id'] not in self.parcel_ids:
+                self._insert_property(item)
+                self.parcel_ids.add(item['parcel_id'])
+                print(f"{item['parcel_id']} saved to database")
             else:
-                df.to_sql('properties', self.engine, if_exists='append', index=False)
-                print(item['parcel_id'], 'saved to database')
+                print('Parcel ID already exists in the database')
         return item
+
+    def _insert_property(self, item):
+        """Insert a new property item into the database."""
+        try:
+            # Prepare data for insertion
+            data = {
+                'id': str(uuid.uuid4()),
+                'parcel_id': item['parcel_id'],
+                'address': item['address'],
+                'city': item['city'],
+                'zip': item['zip'],
+                'property_class': item['property_class'],
+                'featured': False,
+                # Assuming other fields are initialized to None by default
+            }
+            df = pd.DataFrame([data])
+            df.to_sql('properties', self.engine, if_exists='append', index=False)
+        except Exception as e:
+            print(f"Error saving {item['parcel_id']} to database: {e}")
+
