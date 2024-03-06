@@ -9,7 +9,8 @@ load_dotenv()
 
 class LandbankScraperPipeline(object):
     def __init__(self):
-        db_url = os.environ['PROD_POSTGRESS_URL']
+        environment = os.environ.get('ENV', 'development')
+        db_url = os.environ['PROD_POSTGRESS_URL'] if environment != 'development' else os.environ['DEV_POSTGRESS_URL']
         self.engine = create_engine(db_url)
         self.parcel_ids = self._load_parcel_ids()
 
