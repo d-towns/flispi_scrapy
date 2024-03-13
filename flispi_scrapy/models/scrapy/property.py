@@ -22,10 +22,11 @@ class Property(scrapy.Item):
     lot_size = scrapy.Field()
     stories = scrapy.Field()
     garage = scrapy.Field()
-    features = scrapy.Field()
+
     coords = scrapy.Field()
     images = scrapy.Field()
     next_showtime = scrapy.Field()
     exterior_repairs = scrapy.Field()
     interior_repairs = scrapy.Field()
     not_available = scrapy.Field()
+    repair_cost = scrapy.Field()
