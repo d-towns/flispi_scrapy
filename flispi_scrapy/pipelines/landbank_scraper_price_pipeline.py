@@ -44,8 +44,8 @@ class LandbankPriceScraperPipeline(object):
         return item
 
     def _update_property(self, property_, item):
-        # if property_.coords is None:
-        #     self._geocode_property(property_)
+        if property_.coords is None:
+            self._geocode_property(property_)
 
         for field in ['price', 'square_feet', 'bedrooms', 'bathrooms', 'stories']:
             setattr(property_, field, int(item.get(field, 0)))
@@ -77,7 +77,6 @@ class LandbankPriceScraperPipeline(object):
 
     def _geocode_property(self, property_):
         address = f"{property_.address}, {property_.city}, {property_.zip}"
-        print(address)
         try:
             geocode_result = gmaps.geocode(address)
             if geocode_result:

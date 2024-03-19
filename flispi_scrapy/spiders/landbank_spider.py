@@ -80,9 +80,9 @@ class PriceSpider(scrapy.Spider):
         for pid in self.parcel_ids:
             url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
             yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119306006&loc=2&from=main', 
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119176011&loc=2&from=main', 
         #     callback=self.parse,
-        #     meta={'parcel_id': '4119306006'})
+        #     meta={'parcel_id': '4119176011'})
 
 
     # def start_requests(self):
@@ -220,7 +220,7 @@ runner = CrawlerRunner(settings)
 configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
-    # yield runner.crawl(LandBankSpider)
+    yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
     reactor.stop()
 
