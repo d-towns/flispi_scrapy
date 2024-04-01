@@ -225,5 +225,6 @@ def crawl():
     reactor.stop()
 
 
-crawl()
-reactor.run() 
+if not reactor.running:
+    crawl()
+    reactor.run()
