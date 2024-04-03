@@ -224,7 +224,7 @@ def crawl():
     yield runner.crawl(PriceSpider)
     reactor.stop()
 
-
-if not reactor.running:
-    crawl()
-    reactor.run()
+if __name__ == "__main__":
+    if not reactor.running:
+        crawl()
+        reactor.run()
