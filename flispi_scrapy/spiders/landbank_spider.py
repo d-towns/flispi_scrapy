@@ -222,7 +222,6 @@ configure_logging(settings)
 def crawl():
     yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
-    reactor.stop()
 
 if __name__ == "__main__":
     if not reactor.running:
