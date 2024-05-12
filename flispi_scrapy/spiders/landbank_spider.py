@@ -21,6 +21,12 @@ from itemloaders.processors import TakeFirst, MapCompose
 from ..models.util.repair_costs import RepairCostsSingleton
 
 
+# This class is responsible for scraping the landbank website for property data
+# The data is then stored in the database
+# The class is split into two spiders, one for scraping the property data and the other for scraping the price data
+# The price data is scraped from the property details page
+# The property details page is accessed by following the link to the featured property page
+# The featured property page contains more detailed information about the property
 
 class LandBankSpider(scrapy.Spider):
     name = 'landbank_spider'
@@ -80,25 +86,9 @@ class PriceSpider(scrapy.Spider):
         for pid in self.parcel_ids:
             url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
             yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119176011&loc=2&from=main', 
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4002104022&loc=2&from=main', 
         #     callback=self.parse,
-        #     meta={'parcel_id': '4119176011'})
-
-
-    # def start_requests(self):
-    #     load_dotenv()
-
-    #     # #Get specific environment variables
-    #     prod_db_url = os.environ['PROD_POSTGRESS_URL']
-    #     self.engine = create_engine(prod_db_url)
-    #     Session = sessionmaker(bind=self.engine)
-    #     with Session() as session:
-    #         parcel_ids = [row.parcel_id for row in session.query(PropertyEntity.parcel_id).all() if row.parcel_id not in ('0', 'None')]
-    #     for pid in parcel_ids:
-    #         url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
-    #         yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
-        
-        # Test Url
+        #     meta={'parcel_id': '4002104022'})
 
 
     # Grab the data on the search details page (property_sheet.asp)
@@ -223,7 +213,7 @@ def crawl():
     yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     if not reactor.running:
         crawl()
         reactor.run()
