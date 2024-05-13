@@ -15,8 +15,6 @@ sys.path.append(str(parent_dir))
 # Now you can import the PropertyEntity from sql.property
 from models.sql.property import PropertyEntity
 
-gmaps = googlemaps.Client(key='AIzaSyDNQz71iokW0F045lNGGa514dZj9PGhx6E')
-
 connection_string = "sqlite:///landbank_properties.sqlite"
 engine = create_engine(connection_string, echo=True)
 Session = sessionmaker(bind=engine)
