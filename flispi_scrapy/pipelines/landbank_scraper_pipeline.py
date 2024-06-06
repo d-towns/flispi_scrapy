@@ -20,7 +20,7 @@ class LandbankScraperPipeline(object):
         return set(result['parcel_id'].tolist())
 
     def process_item(self, item, spider):
-        if isinstance(item, Property):
+        if isinstance(item, Property) and item != {}:
             if item['parcel_id'] not in self.parcel_ids:
                 self._insert_property(item)
                 self.parcel_ids.add(item['parcel_id'])
