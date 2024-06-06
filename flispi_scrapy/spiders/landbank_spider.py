@@ -86,9 +86,9 @@ class PriceSpider(scrapy.Spider):
         for pid in self.parcel_ids:
             url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
             yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4002104022&loc=2&from=main', 
+        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4635482016&loc=2&from=main', 
         #     callback=self.parse,
-        #     meta={'parcel_id': '4002104022'})
+        #     meta={'parcel_id': '4635482016'})
 
 
     # Grab the data on the search details page (property_sheet.asp)
@@ -101,6 +101,8 @@ class PriceSpider(scrapy.Spider):
             raise CloseSpider('Failed to load parcel IDs from the database.')
         
     def parse(self, response):
+        parcel_id = response.meta['parcel_id']
+        print(f'Processing property details for Parcel ID #: {parcel_id}')
         starting_price = response.xpath('//table[@class="infotab"]/tr[1]/td[2]/text()').get()
         price = self.extract_price(starting_price)
         property_item = Property(parcel_id=response.meta['parcel_id'], price=price)
@@ -154,7 +156,7 @@ class PriceSpider(scrapy.Spider):
     def extract_featured_price(self, response):
         suggested_offer_price = response.xpath("//h2[contains(text(), 'Starting Offer')]/text()").get()
         if suggested_offer_price and 'negotiable' not in str(suggested_offer_price).lower():
-            suggested_offer_price = int(suggested_offer_price.split(':')[1].replace(',', '').replace("$", "").strip())
+            suggested_offer_price = int(float(suggested_offer_price.split(':')[1].replace(',', '').replace("$", "").strip()))
             return int(suggested_offer_price)
         return 0
     
