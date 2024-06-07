@@ -94,7 +94,7 @@ class PriceSpider(scrapy.Spider):
     # Grab the data on the search details page (property_sheet.asp)
     def load_parcel_ids(self):
         try:
-            parcel_ids = [row.parcel_id for row in self.session.query(PropertyEntity).filter(PropertyEntity.interior_repairs.isnot(None)).with_entities(PropertyEntity.parcel_id).all()]
+            parcel_ids = [row.parcel_id for row in self.session.query(PropertyEntity.parcel_id).all()]
             return parcel_ids
         except Exception as e:
             self.logger.error(f"Failed to load parcel IDs: {e}")
