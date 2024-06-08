@@ -214,7 +214,9 @@ configure_logging(settings)
 def crawl():
     yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
-    reactor.stop()
+    
 
-crawl()
-reactor.run() 
+
+if __name__ == 'flispi_scrapy.spiders.landbank_spider' and not reactor.running:
+    crawl()
+    reactor.run() 
