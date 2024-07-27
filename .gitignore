@@ -2,3 +2,8 @@
 /env
 /venv
 /flispi_scrapy/__pycache__
+/flispi_scrapy/models/__pycache__
+/flispi_scrapy/models/util/__pycache__
+/flispi_scrapy/spiders/__pycache__
+/flispi_scrapy/pipelines/__pycache__
+/flispi_scrapy/models/sql/__pycache__
