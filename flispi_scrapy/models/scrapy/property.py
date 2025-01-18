@@ -24,6 +24,7 @@ class Property(scrapy.Item):
     garage = scrapy.Field()
 
     coords = scrapy.Field()
+    # Todo: Images should be a table with a many to one relationship to properties. the record should have the filename for an ftp server or s3 bucket
     images = scrapy.Field()
     next_showtime = scrapy.Field()
     exterior_repairs = scrapy.Field()

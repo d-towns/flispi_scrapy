@@ -19,6 +19,7 @@ from scrapy.utils.project import get_project_settings
 from scrapy.loader import ItemLoader
 from itemloaders.processors import TakeFirst, MapCompose
 from ..models.util.repair_costs import RepairCostsSingleton
+from scrapy.linkextractors import LinkExtractor
 
 
 # This class is responsible for scraping the landbank website for property data
@@ -30,7 +31,7 @@ from ..models.util.repair_costs import RepairCostsSingleton
 
 class LandBankSpider(scrapy.Spider):
     name = 'landbank_spider'
-    allowed_domains = ['thelandbank.org']
+    # allowed_domains = ['thelandbank.org']
     start_urls = ['https://www.thelandbank.org/find_properties.asp?LRCsearch=setdo']
 
     custom_settings = {
@@ -39,7 +40,10 @@ class LandBankSpider(scrapy.Spider):
         }
     }
 
+    # print('Starting Landbank Spider', start_urls)   
+
     def parse(self, response):
+        print('Parsing Landbank Spider', response)
         for row in response.xpath('//tr'):
             loader = ItemLoader(item=Property(), selector=row)
             loader.default_output_processor = TakeFirst()
@@ -69,10 +73,13 @@ class PriceSpider(scrapy.Spider):
             'flispi_scrapy.pipelines.landbank_scraper_price_pipeline.LandbankPriceScraperPipeline': 300,
         }
     }
+    start_urls = ['https://www.thelandbank.org/featured_homes.asp', 'https://www.thelandbank.org/readyforrehab.asp', 'https://www.thelandbank.org/featured_lots.asp']
+    # start_urls = ['https://www.thelandbank.org/featured_homes.asp']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         load_dotenv()
+        print('Starting Price Spider\n\n')
         environment = os.environ.get('ENV', 'development')
         db_url = os.environ['PROD_POSTGRESS_URL'] if environment != 'development' else os.environ['DEV_POSTGRESS_URL']
         if not db_url:
@@ -80,15 +87,18 @@ class PriceSpider(scrapy.Spider):
         engine = create_engine(db_url)
         Session = sessionmaker(bind=engine)
         self.session = Session()
+        self.link_extractor = LinkExtractor(allow_domains='thelandbank.org', allow=r'/featuredprop_fm\.asp\?pid=\d+')
+        
         self.parcel_ids = self.load_parcel_ids()
 
-    def start_requests(self):
-        for pid in self.parcel_ids:
-            url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
-            yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
-        # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4635482016&loc=2&from=main', 
-        #     callback=self.parse,
-        #     meta={'parcel_id': '4635482016'})
+    # def start_requests(self):
+    #     for pid in self.parcel_ids:
+    #         url = f'https://www.thelandbank.org/property_sheet.asp?pid={pid}&loc=2&from=main'
+            
+    #         yield scrapy.Request(url=url, callback=self.parse, meta={'parcel_id': pid})
+    #     # yield scrapy.Request(url='https://www.thelandbank.org/property_sheet.asp?pid=4119380013&loc=2&from=main', 
+    #     #     callback=self.parse,
+    #     #     meta={'parcel_id': '4119380013'})
 
 
     # Grab the data on the search details page (property_sheet.asp)
@@ -101,49 +111,65 @@ class PriceSpider(scrapy.Spider):
             raise CloseSpider('Failed to load parcel IDs from the database.')
         
     def parse(self, response):
-        parcel_id = response.meta['parcel_id']
-        print(f'Processing property details for Parcel ID #: {parcel_id}')
-        starting_price = response.xpath('//table[@class="infotab"]/tr[1]/td[2]/text()').get()
-        price = self.extract_price(starting_price)
-        property_item = Property(parcel_id=response.meta['parcel_id'], price=price)
+        print('Parsing Price Spider', response)
+        # get all the links from the page
 
-        property_not_available = response.xpath("//h2[contains(text(), 'Property Not Availiable')]/text()").get()
+        for link in self.link_extractor.extract_links(response):
+            # make a request to the link
+            print('\n\nLink:', link)
+            yield response.follow(link, callback=self.extract_featured_data)
 
-        property_item.update({'not_available': True if property_not_available else False})
-        if property_not_available: 
-            yield property_item
-            return
 
-        featured_link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
+        # parcel_id = response.meta['parcel_id']
+        # print(f'Processing property details for Parcel ID #: {parcel_id}')
+        # starting_price = response.xpath('//table[@class="infotab"]/tr[1]/td[2]/text()').get()
+        # price = self.extract_price(starting_price)
+        # print(f'Price: {price} \n\n')
+        # property_item = Property(parcel_id=response.meta['parcel_id'], price=price)
 
-        if featured_link:
-            # Follow the link to the featured property page and grab more info
-            yield scrapy.Request(url='https://www.thelandbank.org/' + featured_link, callback=self.extract_featured_data, meta={'property_item': property_item})
-        else:
-            yield property_item
+        # property_not_available = response.xpath("//h2[contains(text(), 'Property Not Availiable')]/text()").get()
+
+        # property_item.update({'not_available': True if property_not_available else False})
+        # if property_not_available: 
+        #     yield property_item
+        #     return
+
+        # featured_link = response.xpath("//a[contains(text(), 'featured')]/@href").get()
+
+        # if featured_link:
+        #     # Follow the link to the featured property page and grab more info
+        #     yield scrapy.Request(url='https://www.thelandbank.org/' + featured_link, callback=self.extract_featured_data, meta={'property_item': property_item})
+        # else:
+        #     yield property_item
 
     # Grab the data on the featured details page (featuredproperty.asp)
     def extract_featured_data(self, response):
         # Follow the link to the featured property page and grab more info
         
         # callback funciton for processing property page reapair description to the official ServiceItem list in the db
+        property_item = Property(parcel_id=response.url.split('=')[-1], price=None)
+    
+
+        print(f'Processing featured property details for Parcel ID #: {property_item["parcel_id"]}')
         repair_mappings = RepairCostsSingleton().get_repair_mappings()
         def map_repair_string(repair_string):
             repair_list = repair_mappings.get(repair_string, [])
             return repair_list
             
-        property_details = response.meta['property_item']
-        property_details.update({
+        # property_details = response.meta['property_item']
+        property_item.update({
             'featured': True,
             'exterior_repairs': self.extract_list_items(response.xpath("//article[@id='content']/ul[position()=1]/li"), map_repair_string),
             'interior_repairs': self.extract_list_items(response.xpath("//article[@id='content']/ul[position()=2]/li"), map_repair_string),
             'images': self.extract_images(response),
             'next_showtime': self.extract_next_showtime(response),
-            'price': self.extract_featured_price(response) if not property_details['price'] else property_details['price'],
+            'price': self.extract_featured_price(response) if not property_item['price'] else property_item['price'],
             **self.extract_property_features(response),
         })
-        print(property_details)
-        yield property_details
+        print(property_item)
+        # print(property_details)
+        property_item.update({'not_available': False})
+        yield property_item
 
     
     # FEATURED DATA HELPER FUNCTIONS
@@ -151,10 +177,11 @@ class PriceSpider(scrapy.Spider):
     def extract_price(self, price_str):
         if price_str and '$' in price_str:
             return int(price_str.replace('$', '').replace(',', '').strip())
-        return 0
+        return None
 
     def extract_featured_price(self, response):
-        suggested_offer_price = response.xpath("//h2[contains(text(), 'Starting Offer')]/text()").get()
+        suggested_offer_price = response.xpath("//h3[contains(text(), 'Starting Offer')]/text()").get()
+        print('\n\nSuggested Offer Price:', suggested_offer_price)
         if suggested_offer_price and 'negotiable' not in str(suggested_offer_price).lower():
             suggested_offer_price = int(float(suggested_offer_price.split(':')[1].replace(',', '').replace("$", "").strip()))
             return int(suggested_offer_price)
@@ -171,9 +198,11 @@ class PriceSpider(scrapy.Spider):
         return ['https://www.thelandbank.org/' + img if not img.startswith('http') else img for img in images]
     
     def extract_next_showtime(self, response):
-        next_showtime = response.xpath("//p[contains(text(), '2024')]/text()").get()
+        next_showtime = response.xpath("//p[contains(text(), '2025')]/text()").get()
         if next_showtime:
             match = re.search(r'(\w+,\s+\w+\s+\d{1,2},\s+\d{4});\s+(\d{1,2}:\d{2}\s+[ap]\.m\.)', next_showtime)
+            if not match:
+                match = re.search(r'(\w+,\s+\w+\s+\d{1,2},\s+\d{4});\s+(\d{1,2}:\d{2}\s+[ap]\.m\.)\s*-\s*(\d{1,2}:\d{2}\s+[ap]\.m\.)', next_showtime)
             if match:
                 date_to_parse = match.group(1) + ' ' + match.group(2)
                 date_string = date_to_parse.replace('p.m.', 'PM').replace('a.m.', 'AM')
@@ -212,7 +241,8 @@ runner = CrawlerRunner(settings)
 configure_logging(settings)
 @defer.inlineCallbacks
 def crawl():
-    yield runner.crawl(LandBankSpider)
+    print('Running crawl')
+    # yield runner.crawl(LandBankSpider)
     yield runner.crawl(PriceSpider)
     
 
