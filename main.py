@@ -1,10 +1,17 @@
-from scrapy.cmdline import execute
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
 
-import sys
-import os
+from flispi_scrapy.spiders.landbank_spider import LandBankSpider, PriceSpider
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-print('Running main.py')
-execute(['scrapy', 'crawl', 'landbank_spider'])
-execute(['scrapy', 'crawl', 'price_spider'])
+def run_spiders():
+    process = CrawlerProcess(get_project_settings())
+    # process.crawl(LandBankSpider)
+    process.crawl(PriceSpider)
+    process.start()  # Blocks here until all spiders are finished
 
+if __name__ == '__main__':
+    print('Running main.py')
+    run_spiders()
+    print('Spiders finished')
+    import sys
+    sys.exit()

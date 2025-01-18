@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
+import sys
 from dotenv import load_dotenv
 from datetime import datetime
 import re
@@ -73,8 +74,8 @@ class PriceSpider(scrapy.Spider):
             'flispi_scrapy.pipelines.landbank_scraper_price_pipeline.LandbankPriceScraperPipeline': 300,
         }
     }
-    start_urls = ['https://www.thelandbank.org/featured_homes.asp', 'https://www.thelandbank.org/readyforrehab.asp', 'https://www.thelandbank.org/featured_lots.asp']
-    # start_urls = ['https://www.thelandbank.org/featured_homes.asp']
+    # start_urls = ['https://www.thelandbank.org/featured_homes.asp', 'https://www.thelandbank.org/readyforrehab.asp', 'https://www.thelandbank.org/featured_lots.asp']
+    start_urls = ['https://www.thelandbank.org/featured_homes.asp']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -236,17 +237,18 @@ class PriceSpider(scrapy.Spider):
                 features['garage'] = text.split('Garage')[0].strip()
         return features 
 
-settings = get_project_settings()
-runner = CrawlerRunner(settings)
-configure_logging(settings)
-@defer.inlineCallbacks
-def crawl():
-    print('Running crawl')
-    # yield runner.crawl(LandBankSpider)
-    yield runner.crawl(PriceSpider)
+# settings = get_project_settings()
+# runner = CrawlerRunner(settings)
+# configure_logging(settings)
+# @defer.inlineCallbacks
+# def crawl():
+#     print('Running crawl')
+#     # yield runner.crawl(LandBankSpider)
+#     yield runner.crawl(PriceSpider)
+#     sys.exit()
     
 
 
-if __name__ == 'flispi_scrapy.spiders.landbank_spider' and not reactor.running:
-    crawl()
-    reactor.run() 
+# if __name__ == 'flispi_scrapy.spiders.landbank_spider' and not reactor.running:
+#     crawl()
+#     reactor.run() 
