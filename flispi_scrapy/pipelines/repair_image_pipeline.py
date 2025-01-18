@@ -60,7 +60,7 @@ class ImagePipeline(object):
         
 
 
-    response = client.chat.completions.create(
+    response = self.client.chat.completions.create(
     model="gpt-4-turbo",
     messages=[
         {

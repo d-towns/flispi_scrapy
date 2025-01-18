@@ -47,8 +47,10 @@ class LandbankPriceScraperPipeline(object):
     def _update_property(self, property_, item):
         if property_.coords is None:
             self._geocode_property(property_)
-
-        for field in ['price', 'square_feet', 'bedrooms', 'bathrooms', 'stories']:
+        for field in ['price']:
+            if item.get(field) is not None:
+                setattr(property_, field, float(item.get(field)))
+        for field in [ 'square_feet', 'bedrooms', 'bathrooms', 'stories']:
             setattr(property_, field, int(item.get(field, 0)))
 
         for field in ['year_built', 'garage', 'featured', 'images', 'next_showtime', 'interior_repairs', 'exterior_repairs']:
