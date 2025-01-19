@@ -74,8 +74,8 @@ class PriceSpider(scrapy.Spider):
             'flispi_scrapy.pipelines.landbank_scraper_price_pipeline.LandbankPriceScraperPipeline': 300,
         }
     }
-    # start_urls = ['https://www.thelandbank.org/featured_homes.asp', 'https://www.thelandbank.org/readyforrehab.asp', 'https://www.thelandbank.org/featured_lots.asp']
-    start_urls = ['https://www.thelandbank.org/featured_homes.asp']
+    start_urls = ['https://www.thelandbank.org/featured_homes.asp', 'https://www.thelandbank.org/readyforrehab.asp', 'https://www.thelandbank.org/featured_lots.asp']
+    # start_urls = ['https://www.thelandbank.org/featured_homes.asp']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
