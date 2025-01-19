@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from openai import OpenAI
 import googlemaps
 import os
 import uuid
