@@ -220,7 +220,7 @@ class PriceSpider(scrapy.Spider):
         for li in property_info_list.xpath('./li'):
             text = li.xpath('normalize-space(.)').get()
             if 'Square feet' in text:
-                features['square_feet'] = int(text.split('Square feet:')[1].strip())
+                features['square_feet'] = int(text.split('Square feet')[1].strip())
             elif 'Bedrooms' in text or "Bedroom" in text:
                 text.replace('s', '')
                 features['bedrooms'] = int(text.split('Bedroom')[0].strip())
