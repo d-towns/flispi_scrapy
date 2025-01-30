@@ -5,7 +5,7 @@ from flispi_scrapy.spiders.landbank_spider import LandBankSpider, PriceSpider
 
 def run_spiders():
     process = CrawlerProcess(get_project_settings())
-    process.crawl(LandBankSpider)
+    # process.crawl(LandBankSpider)
     process.crawl(PriceSpider)
     process.start()  # Blocks here until all spiders are finished
 
